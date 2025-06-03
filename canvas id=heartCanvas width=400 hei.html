@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>aplicativofunny</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #f9c5d1 0%, #fbd3e9 100%);
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      position: relative;
+    }
+
+    h1 {
+      color: #333;
+      font-size: 22px;
+      margin: 10px;
+      text-align: center;
+    }
+
+    #heartCanvas {
+      width: 100vw;
+      height: calc(100vh - 100px); /* espaço para título e mensagens */
+      background: white;
+      display: block;
+    }
+
+    #message {
+      font-size: 18px;
+      color: #555;
+      text-align: center;
+      margin-top: 8px;
+      padding: 0 10px;
+    }
+
+    #resetButton {
+      margin-top: 10px;
+      padding: 10px 20px;
+      background: #ff6f91;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    #resetButton:hover {
+      background: #ff4f73;
+    }
+
+    #balloon {
+      position: absolute;
+      font-size: 40px;
+      cursor: pointer;
+      transition: top 0.3s, left 0.3s;
+      user-select: none;
+      display: none;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>aplicativofunny</h1>
+  <canvas id="heartCanvas"></canvas>
+  <div id="message"></div>
+  <button id="resetButton" style="display: none;">Recomeçar</button>
+  <div id="balloon">🎈</div>
+
+  <script>
+    const canvas = document.getElementById('heartCanvas');
+    const ctx = canvas.getContext('2d');
+    const balloon = document.getElementById('balloon');
+
+    let heartSize = 100;
+    let heartX = 0;
+    let heartY = 0;
+    let clickCount = 0;
+    let finalMessage = false;
+    let balloonClickAttempts = 0;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight - 100; // espaço reservado para título e botões
+      if (!finalMessage) {
+        setHeartPos();
+        draw();
+      } else {
+        draw();
+      }
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+
+    function setHeartPos() {
+      heartX = Math.random() * (canvas.width - heartSize);
+      heartY = Math.random() * (canvas.height - heartSize);
+    }
+
+    function drawHeart() {
+      ctx.fillStyle = '#ff4f73';
+      const r = heartSize / 4;
+
+      ctx.beginPath();
+      ctx.arc(heartX + r, heartY + r, r, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(heartX + 3 * r, heartY + r, r, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(heartX, heartY + r);
+      ctx.lineTo(heartX + heartSize, heartY + r);
+      ctx.lineTo(heartX + heartSize / 2, heartY + heartSize);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (finalMessage) {
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#333';
+        ctx.font = '18px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('sim eu fiz isso', canvas.width / 2, canvas.height * 0.8);
+      } else {
+        drawHeart();
+      }
+    }
+
+    function showBalloon() {
+      positionBalloonRandomly();
+      balloon.style.display = 'block';
+    }
+
+    function positionBalloonRandomly() {
+      const balloonWidth = 40;
+      const balloonHeight = 40;
+      const padding = 10;
+
+      const maxX = canvas.offsetLeft + canvas.width - balloonWidth - padding;
+      const maxY = canvas.offsetTop + canvas.height - balloonHeight - padding;
+      const minX = canvas.offsetLeft + padding;
+      const minY = canvas.offsetTop + padding;
+
+      const randomX = Math.random() * (maxX - minX) + minX;
+      const randomY = Math.random() * (maxY - minY) + minY;
+
+      balloon.style.left = `${randomX}px`;
+      balloon.style.top = `${randomY}px`;
+    }
+
+    canvas.addEventListener('click', function (e) {
+      if (finalMessage) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      if (x >= heartX && x <= heartX + heartSize && y >= heartY && y <= heartY + heartSize) {
+        clickCount++;
+        setHeartPos();
+        draw();
+
+        if (clickCount >= 3) {
+          document.getElementById('message').textContent = "será que eu fiz um app?...";
+          finalMessage = true;
+          document.getElementById('resetButton').style.display = 'block';
+          draw();
+          showBalloon();
+        }
+      }
+    });
+
+    document.getElementById('resetButton').addEventListener('click', function () {
+      clickCount = 0;
+      finalMessage = false;
+      balloonClickAttempts = 0;
+      document.getElementById('message').textContent = "";
+      this.style.display = 'none';
+      balloon.style.display = 'none';
+      setHeartPos();
+      draw();
+    });
+
+    balloon.addEventListener('click', function () {
+      balloonClickAttempts++;
+
+      if (balloonClickAttempts < 6) {
+        positionBalloonRandomly();
+      } else {
+        balloon.style.display = 'none';
+        document.getElementById('message').textContent = "Quase que eu ganho ein";
+      }
+    });
+
+    resizeCanvas();
+  </script>
+
+</body>
+</html>
